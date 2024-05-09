@@ -8,6 +8,7 @@ import (
 
 const (
 	AzureCloud = "GFAZPL_AZURE_CLOUD"
+	AzureCloudsConfig = "GFAZPL_AZURE_CLOUDS_CONFIG"
 
 	AzureAuthEnabled = "GFAZPL_AZURE_AUTH_ENABLED"
 

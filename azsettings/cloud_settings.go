@@ -10,10 +10,10 @@ type AzureCloudInfo struct {
 }
 
 type AzureCloudSettings struct {
-	Name         string
-	DisplayName  string
-	AadAuthority string
-	Properties   map[string]string
+	Name         string				`json:"name"`
+	DisplayName  string 			`json:"displayName"`
+	AadAuthority string 			`json:"aadAuthority"`
+	Properties   map[string]string 	`json:"properties"`
 }
 
 var predefinedClouds = []*AzureCloudSettings{
@@ -55,8 +55,8 @@ var predefinedClouds = []*AzureCloudSettings{
 	},
 }
 
-func (*AzureSettings) GetCloud(cloudName string) (*AzureCloudSettings, error) {
-	clouds := getClouds()
+func (settings *AzureSettings) GetCloud(cloudName string) (*AzureCloudSettings, error) {
+	clouds := settings.getClouds()
 
 	for _, cloud := range clouds {
 		if cloud.Name == cloudName {
@@ -68,15 +68,21 @@ func (*AzureSettings) GetCloud(cloudName string) (*AzureCloudSettings, error) {
 }
 
 // Returns all clouds configured on the instance, including custom clouds if any
-func (*AzureSettings) Clouds() []AzureCloudInfo {
-	clouds := getClouds()
+func (settings *AzureSettings) Clouds() []AzureCloudInfo {
+	clouds := settings.getClouds()
 	return mapCloudInfo(clouds)
 }
 
 // Returns only the custom clouds configured on the instance
-func (*AzureSettings) CustomClouds() []AzureCloudInfo {
-	clouds := getCustomClouds()
+func (settings *AzureSettings) CustomClouds() []AzureCloudInfo {
+	clouds := settings.getCustomClouds()
 	return mapCloudInfo(clouds)
+}
+
+func (settings *AzureSettings) SetCustomClouds(customCloudsJSON string) error {
+	var err error
+	settings.customClouds, err =  parseCustomClouds(customCloudsJSON)
+	return err
 }
 
 func mapCloudInfo(clouds []*AzureCloudSettings) []AzureCloudInfo {
@@ -91,16 +97,15 @@ func mapCloudInfo(clouds []*AzureCloudSettings) []AzureCloudInfo {
 	return results
 }
 
-func getClouds() []*AzureCloudSettings {
-	if clouds := getCustomClouds(); len(clouds) > 0 {
-		allClouds := append(clouds, predefinedClouds...)
+func (settings *AzureSettings) getClouds() []*AzureCloudSettings {
+	if clouds := settings.getCustomClouds(); len(clouds) > 0 {
+		allClouds := append(predefinedClouds, clouds...)
 		return allClouds
 	}
 
 	return predefinedClouds
 }
 
-func getCustomClouds() []*AzureCloudSettings {
-	// Configuration of Azure clouds not yet supported
-	return nil
+func (settings *AzureSettings) getCustomClouds() []*AzureCloudSettings {
+	return settings.customClouds
 }

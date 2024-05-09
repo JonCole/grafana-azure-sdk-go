@@ -3,6 +3,7 @@ package azsettings
 import (
 	"context"
 	"strconv"
+	"encoding/json"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 )
@@ -21,7 +22,9 @@ type AzureSettings struct {
 	UserIdentityFallbackCredentialsEnabled bool
 
 	// This field determines which plugins will receive the settings via plugin context
-	ForwardSettingsPlugins []string
+	ForwardSettingsPlugins []string	
+
+	customClouds []*AzureCloudSettings
 }
 
 type WorkloadIdentitySettings struct {
@@ -58,6 +61,12 @@ func ReadFromContext(ctx context.Context) (*AzureSettings, bool) {
 
 	if v := cfg.Get(AzureAuthEnabled); v == strconv.FormatBool(true) {
 		settings.AzureAuthEnabled = true
+	}
+
+	if customCloudsJSON := cfg.Get(AzureCloudsConfig); customCloudsJSON != "" {		
+		if err := settings.SetCustomClouds(customCloudsJSON); err != nil {
+			// TODO: CAN WE LOG ERRORS?
+		}
 	}
 
 	hasSettings := false
@@ -132,4 +141,13 @@ func ReadSettings(ctx context.Context) (*AzureSettings, error) {
 	}
 
 	return azSettings, nil
+}
+
+func parseCustomClouds(customCloudJSON string) ([]*AzureCloudSettings, error) {
+	var customClouds []*AzureCloudSettings
+	err := json.Unmarshal([]byte(customCloudJSON), &customClouds)
+	if err != nil {
+		return nil, err
+	}
+	return customClouds, nil
 }
